@@ -5,6 +5,9 @@
 # N8N AI Agent For Image Analysis | Genator | Editor
 This repository contains a collection of n8n workflows that utilize AI agents for image analysis, generation, and editing. These workflows are designed to automate various tasks related to image processing using AI technologies.
 
+# Demo:
+- [Demo video](https://youtu.be/zNiKGW8R5rA)
+
 # How to Use:
 ## 1. Clone the repository to your local machine:
 ```bash
