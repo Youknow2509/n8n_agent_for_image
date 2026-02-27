@@ -1,0 +1,103 @@
+# Docker compose for n8n local
+networks:
+    nw1:
+        driver: bridge
+
+volumes:
+    n8n_data:
+        driver: local
+    traefik_data:
+        driver: local
+    postgres_data:
+        driver: local
+    local_files:
+        driver: local
+
+services:
+    # Proxy load balancer
+    traefik:
+        image: 'traefik'
+        container_name: 'traefik'
+        restart: always
+        command:
+            - '--api.insecure=true'
+            - '--providers.docker=true'
+            - '--providers.docker.exposedbydefault=false'
+            - '--entrypoints.web.address=:80'
+            - '--entrypoints.web.http.redirections.entryPoint.to=websecure'
+            - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+            - '--entrypoints.websecure.address=:443'
+            - '--certificatesresolvers.mytlschallenge.acme.tlschallenge=true'
+            - '--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json'
+        ports:
+            - '80:80'
+            - '443:443'
+        volumes:
+            - traefik_data:/letsencrypt
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        networks:
+            - nw1
+
+    # Posgres single node
+    postgresql:
+        image: bitnamilegacy/postgresql:latest
+        container_name: 'postgresql'
+        networks:
+            - nw1
+        ports:
+            - '${POSTGRESQL_PORT}:5432'
+        environment:
+            - 'POSTGRESQL_DATABASE=${POSTGRESQL_DATABASE}'
+            - 'POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD}'
+        volumes:
+            - 'postgres_data:/bitnami/postgresql'
+        healthcheck:
+            test: pg_isready -U ${POSTGRESQL_USER} -d ${POSTGRESQL_DATABASE}
+            interval: 10s
+            timeout: 3s
+            retries: 3
+
+    # N8n local
+    n8n:
+        image: docker.n8n.io/n8nio/n8n
+        container_name: 'n8n'
+        restart: always
+        ports:
+            - '5678:5678'
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.n8n.entrypoints=web,websecure
+            - traefik.http.routers.n8n.tls.certresolver=mytlschallenge
+            - traefik.http.middlewares.n8n.headers.SSLRedirect=true
+            - traefik.http.middlewares.n8n.headers.STSSeconds=315360000
+            - traefik.http.middlewares.n8n.headers.browserXSSFilter=true
+            - traefik.http.middlewares.n8n.headers.contentTypeNosniff=true
+            - traefik.http.middlewares.n8n.headers.forceSTSHeader=true
+            - traefik.http.middlewares.n8n.headers.STSIncludeSubdomains=true
+            - traefik.http.middlewares.n8n.headers.STSPreload=true
+            - traefik.http.routers.n8n.middlewares=n8n@docker
+        environment:
+            - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+            - N8N_PORT=5678
+            - N8N_SECURE_COOKIE=false # For dev
+            - N8N_RUNNERS_ENABLED=true
+            - NODE_ENV=production
+            - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+            - TZ=${GENERIC_TIMEZONE}
+            # For database
+            - DB_TYPE=postgresdb
+            - DB_POSTGRESDB_DATABASE=${POSTGRESQL_DATABASE}
+            - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST}
+            - DB_POSTGRESDB_PORT=${POSTGRESQL_PORT}
+            - DB_POSTGRESDB_USER=${POSTGRESQL_USER}
+            - DB_POSTGRESDB_PASSWORD=${POSTGRESQL_PASSWORD}
+        volumes:
+            - n8n_data:/home/node/.n8n
+            - local_files:/files
+        networks:
+            - nw1
+        depends_on:
+            postgresql:
+                condition: service_healthy
+            traefik:
+                condition: service_started

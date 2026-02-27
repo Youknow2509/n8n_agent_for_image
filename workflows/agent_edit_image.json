@@ -1,0 +1,2227 @@
+{
+  "name": "agent_edit_image",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "23f1c647-c20c-4168-b727-6273311bd0eb",
+              "leftValue": "={{ $json.have_file }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1680,
+        -480
+      ],
+      "id": "6ecfcc57-93e8-470b-b696-6415dafc92ad",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1KRMDF0EReb7UDwXN6o0wDP50rh7aHfmV",
+          "mode": "list",
+          "cachedResultName": "agent_image",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1KRMDF0EReb7UDwXN6o0wDP50rh7aHfmV"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1296,
+        -480
+      ],
+      "id": "dac4e9bd-2d8b-4244-85be-0e5279ef60f9",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "lIFz1vB4yOBYKJne",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n      fileName: $input.first().json.file_name\n  },\n  binary: {\n      data: $input.first().json.file\n  },\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        -480
+      ],
+      "id": "b307d2d8-ee04-47cd-8545-c99ef2a1f00e",
+      "name": "Prepare file"
+    },
+    {
+      "parameters": {
+        "jsCode": "let time_now = Date.now();\n\nif ($input.first().json.files != null) {\n  let file_data =  $input.first().binary.data0;\n  let file_name = `${time_now}_${$input.first().json.sessionId}_${file_data.fileName}`;\n  return {\n    timestamp: time_now,\n    have_file: true,\n    file: file_data,\n    file_name,\n    ...$input.first().json,\n  };\n} else {\n  return {\n    timestamp: time_now,\n    file_name: \"\",\n    have_file: false,\n    ...$input.first().json\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1824,
+        -160
+      ],
+      "id": "99e1a9a3-73a7-4151-800d-7d7c6a60d04a",
+      "name": "create_data"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "useDataOfInput": 2
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -928,
+        -224
+      ],
+      "id": "b5af221b-5f09-4531-84ab-3ccf698aafa7",
+      "name": "Merge",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "Prepare data and logging",
+        "height": 496,
+        "width": 1040
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1856,
+        -528
+      ],
+      "typeVersion": 1,
+      "id": "b2bb39a8-ebd9-4657-bb76-a1c46defeeb7",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.data }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "=Bạn là một chuyên gia phân loại, từ yêu cầu của người dùng trả về các giá trị phân loại sau: - \"image_analyze\": khi người dùng yêu cầu phân tích ảnh hiện tại và trước đó - \"image_edit\": khi người dùng yêu cầu sửa ảnh - \"image_gen\": khi người dùng yêu cầu tạo ảnh - \"chat\": các trường hợp ngoại lệ Chỉ trả về các trường tôi mô tả và không giải thích gì thêm ( Không được trả về json, câu trả lời ..., awser ...., ```text ... ```, ...)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        80
+      ],
+      "id": "00aaf9ff-c767-4699-84df-439e119a608c",
+      "name": "classify req",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XZrHEP3Xms9xPYKa",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  \"data\": $input.first().json.chatInput\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        80
+      ],
+      "id": "9cf9fe3c-6f78-457b-8e5a-28bb063e43e0",
+      "name": "get chat input req"
+    },
+    {
+      "parameters": {
+        "content": "Agent classify req\n",
+        "height": 464,
+        "width": 704,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -768,
+        -48
+      ],
+      "typeVersion": 1,
+      "id": "c6885ff2-6539-4962-b36c-8c4d722f8286",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cc5b78f1-65cd-4ee6-adf5-0a355582acf4",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": "image_analyze",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "82d56b43-bffb-4a91-a9df-1683d3befb67",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": "image_gen",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "69369b03-f383-4582-b2cf-de477dcdd36c",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": "image_edit",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "0b2be20f-b553-426b-9537-109f24aabd0a",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": "chat",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        128
+      ],
+      "id": "feb53f74-40e6-47b2-a3a7-7303d3b38ca7",
+      "name": "check output is ok"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image_analyze",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "58d5fbdd-8d72-477a-9f34-6d80b5be5695"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "analyze"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "63c2470c-7586-4900-a994-9cd677df113a",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image_gen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "generator"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "913f8373-2ca0-44d0-8617-5f40cc1fc7b5",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image_edit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "edit"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9b6f6bc2-1bf7-40a7-b9bc-65b62ec3c1eb",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        -64
+      ],
+      "id": "1f9068bc-da65-4cce-ac22-11eb81a31a2e",
+      "name": "Handle data with mode"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "iIL0PhQsa6bIHZqT",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/iIL0PhQsa6bIHZqT",
+          "cachedResultName": "workflow_prepare_data_req_to_model"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        -784
+      ],
+      "id": "cfcd8563-bd2e-4450-ad89-af38f45c247e",
+      "name": "Prepare data req to model analyze image"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "iIL0PhQsa6bIHZqT",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/iIL0PhQsa6bIHZqT",
+          "cachedResultName": "WF - Prepare data req to model"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        -368
+      ],
+      "id": "06636dee-4529-433d-971e-90216ff73d96",
+      "name": "Prepare data req to model generator image"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "iIL0PhQsa6bIHZqT",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/iIL0PhQsa6bIHZqT",
+          "cachedResultName": "workflow_prepare_data_req_to_model"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        32
+      ],
+      "id": "3e70ca79-982b-4bd3-886b-770f7d92c360",
+      "name": "Prepare data req to model edit image"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "iIL0PhQsa6bIHZqT",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/iIL0PhQsa6bIHZqT",
+          "cachedResultName": "workflow_prepare_data_req_to_model"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        448
+      ],
+      "id": "10b8c9ad-6523-4c8d-8ec2-95bf88635fc0",
+      "name": "Prepare data req to model"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  \"session_id\": $input.first().json.sessionId,\n  \"timestamp\": $input.first().json.timestamp\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -224
+      ],
+      "id": "86342fb8-91e0-4f5d-9c89-8b111c5038f6",
+      "name": "get session"
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        336,
+        -32
+      ],
+      "id": "4cdbd987-93e7-4d6a-9323-01392271a771",
+      "name": "merge data after match mode"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  \"type\": $input.first().json.content.parts[0].text\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        128
+      ],
+      "id": "2391172a-9a6d-4a36-83ef-2b57ac6519cb",
+      "name": "mapping field type req"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "file_name": "={{ $json.name }}",
+            "file_id": "={{ $json.id }}",
+            "timestamp": "={{ $('create_data').item.json.timestamp }}",
+            "session_id": "={{ $('create_data').item.json.sessionId }}",
+            "chat_input": "={{ $('create_data').item.json.chatInput }}",
+            "has_file": "={{ $('create_data').item.json.have_file }}",
+            "file_res": "={{ `${$('create_data').item.json.sessionId}_${$('create_data').item.json.timestamp}_res.png` }}",
+            "has_file_res": "=false"
+          },
+          "matchingColumns": [
+            "file_name"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chat_input",
+              "displayName": "chat_input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_file",
+              "displayName": "has_file",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_res",
+              "displayName": "file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_res_id",
+              "displayName": "file_res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "has_file_res",
+              "displayName": "has_file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text_res",
+              "displayName": "text_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1088,
+        -480
+      ],
+      "id": "734bca25-9f3d-4767-b920-f046d2d6b93a",
+      "name": "logs1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "session_id": "={{ $json.sessionId }}",
+            "chat_input": "={{ $json.chatInput }}",
+            "has_file": "={{ $json.have_file }}",
+            "file_name": "={{ $json.file_name }} ",
+            "has_file_res": "false",
+            "file_res": "={{ `${$('create_data').item.json.sessionId}_${$('create_data').item.json.timestamp}_res.png` }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chat_input",
+              "displayName": "chat_input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_file",
+              "displayName": "has_file",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_res",
+              "displayName": "file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_res_id",
+              "displayName": "file_res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "has_file_res",
+              "displayName": "has_file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text_res",
+              "displayName": "text_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1312,
+        -304
+      ],
+      "id": "592d316e-e5b6-4593-9ae7-37d1dac2f783",
+      "name": "logs2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=Bạn là AI chuyên phân tích hình ảnh và hiểu ngữ cảnh hội thoại.\n\nDưới đây là dữ liệu phiên làm việc:\n\n- Ảnh cần phân tích:\n  - file_name: {{ $json.data.image.file_name }}\n  - file_id: {{ $json.data.image.file_id }}\n\n- Yêu cầu hiện tại của người dùng:\n  \"{{ $json.data.current_chat_input }}\"\n\n- Tin nhắn trước đó:\n  \"{{ $json.data.previous_chat_input }}\"\n\n- Các tin nhắn gần nhất trong phiên:\n  {{ $json.data.top_messages }}\n\nNhiệm vụ của bạn:\n\n1. Phân tích chính xác nội dung có trong ảnh.\n2. Trả lời theo đúng yêu cầu của current_chat_input.\n3. Nếu câu hỏi trùng lặp với trước đó, vẫn trả lời đầy đủ và rõ ràng.\n4. Không suy đoán ngoài nội dung nhìn thấy trong ảnh.\n5. Không thêm thông tin không có trong ảnh.\n6. Trả lời bằng tiếng Việt.\n7. Trình bày rõ ràng, dễ hiểu.\n8. Nếu nội dung là phân tích chi tiết ảnh tài liệu, phải trình bày đầy đủ nôi dung.\nChỉ trả về nội dung phân tích, không nhắc lại JSON input.",
+        "inputType": "binary",
+        "options": {
+          "maxOutputTokens": 2500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1136,
+        -720
+      ],
+      "id": "98d6f980-b0d8-40c8-84c6-feaddfb36eb8",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XZrHEP3Xms9xPYKa",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parts = $json?.content?.parts || [];\n\nconst markdown = parts\n  .map(p => p?.text || \"\")\n  .join(\"\\n\")\n  .trim();\n\n// Agent chỉ cần 1 field text\nreturn [\n  {\n    json: {\n      text: markdown\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        -800
+      ],
+      "id": "d6111bd9-8d3f-4e53-9cf8-72e2af5356c5",
+      "name": "return_make_down_res_analyze"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    \"json\": {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"This image displays a card, likely a student ID or a regulations card, from a Vietnamese university. The card is rectangular with rounded corners and is placed on a textured, possibly wooden, surface.\\n\\nThe text on the card is in Vietnamese and can be translated as follows:\\n\\n**Top Section (Blue background, yellow text):**\\n*   **QUY ĐỊNH SỬ DỤNG THẺ**\\n    *   *(English: CARD USAGE REGULATIONS)*\\n\\n**Main Section (White background, black numbered text, listing regulations):**\\n1.  **Thẻ này chỉ dùng cho sinh viên Trường Đại học Giao thông Vận tải.**\\n    *   *(English: This card is only for students of the University of Transport and Communications.)*\\n2.  **Sinh viên phải đeo thẻ khi đến Trường.**\\n    *   *(English: Students must wear the card when coming to the University.)*\\n3.  **Sinh viên phải tự giữ gìn, bảo quản thẻ của mình.**\\n    *   *(English: Students must take care of and preserve their card.)*\\n4.  **Không để thẻ ở môi trường nhiệt độ cao, hóa chất, từ tính.**\\n    *   *(English: Do not leave the card in environments with high temperatures, chemicals, or magnetism.)*\\n5.  **Nếu mất thẻ phải báo ngay cho Phòng Công tác Chính trị & Sinh viên.**\\n    *   *(English: If the card is lost, immediately report it to the Department of Political Affairs & Student Affairs.)*\\n6.  **Nghiêm cấm làm giả, mượn và cho mượn thẻ.**\\n    *   *(English: Strictly forbidden to forge, borrow, and lend the card.)*\\n7.  **Thẻ không có giá trị trao đổi, chuyển nhượng.**\\n    *   *(English: The card has no exchange or transfer value.)*\\n\\n**Bottom Section (White background with blue stripe, icons and URLs):**\\n*   **[Globe icon] http://utc.edu.vn** (This is the official website for the University of Transport and Communications.)\\n*   **[Facebook icon] https://www.facebook.com/dhgtvtcaugjay** (This is a Facebook page, likely for a division or campus of the University of Transport and Communications, possibly related to the Cầu Giấy district.)\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  }\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        -928
+      ],
+      "id": "c4af34cc-7a23-4196-b56d-9549a4700876",
+      "name": "temp res model return analyze"
+    },
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true,
+          "allowedFilesMimeTypes": "*",
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2224,
+        -160
+      ],
+      "id": "f6592c97-201a-4056-a7d3-b823f1bd46e7",
+      "name": "When chat message received",
+      "webhookId": "dbc4256c-319f-4a52-b6b5-2c9c00e47160",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "name": "={{ `${$('create_data').item.json.sessionId}_${$('create_data').item.json.timestamp}_res.png` }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1KRMDF0EReb7UDwXN6o0wDP50rh7aHfmV",
+          "mode": "list",
+          "cachedResultName": "agent_image",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1KRMDF0EReb7UDwXN6o0wDP50rh7aHfmV"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1536,
+        -384
+      ],
+      "id": "26b3ccbe-30cf-46e4-8099-e719173b4cda",
+      "name": "upload_image_res_gen",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "lIFz1vB4yOBYKJne",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Handle analyze image\n",
+        "height": 400,
+        "width": 1664
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        -960
+      ],
+      "typeVersion": 1,
+      "id": "3b9f275c-e0ca-4834-a6b4-06f08c8fcef7",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $('Handle data with mode').item.json.timestamp }}",
+            "text_res": "={{ $json.text }}",
+            "has_file_res": "false"
+          },
+          "matchingColumns": [
+            "timestamp"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_input",
+              "displayName": "chat_input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "has_file",
+              "displayName": "has_file",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_res",
+              "displayName": "file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "has_file_res",
+              "displayName": "has_file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text_res",
+              "displayName": "text_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1600,
+        -928
+      ],
+      "id": "9155936f-bfcd-4ddf-9b1b-2c15012f275f",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4208,
+        -112
+      ],
+      "id": "c21d5b7a-509a-4602-bc25-b766b4c27d46",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "Handle gen image\nTODO:\n- Change model use curl, request with multi image and chat text to model\n",
+        "height": 288,
+        "width": 1664,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        -448
+      ],
+      "typeVersion": 1,
+      "id": "9810ff91-c038-4587-b572-135768cfd158",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const files = $(\"upload_image_res_gen\").all() || [];\n\nconst markdown = files\n  .filter(file => file.json.mimeType?.startsWith(\"image/\"))\n  .map(file => {\n    const thumb = file.json.thumbnailLink;\n    const download = file.json.webViewLink;\n    const name = file.json.name;\n\n    return `\n### Ảnh sau khi tạo\n\n[![${name}](${thumb})](${download})\n\n[⬇ Download ảnh](${download})\n`;\n  })\n  .join(\"\\n\");\n\nreturn [\n  {\n    json: {\n      text: markdown.trim()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        -384
+      ],
+      "id": "585ebd05-6d53-4fb1-ab7d-6f342c69cfc9",
+      "name": "return_make_down_res_gen"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "=Tạo hình ảnh dựa trên yêu cầu sau:\nYêu cầu hiện tại: {{ $json.data.current_chat_input }}\nNgữ cảnh trước đó:\n- {{ $json.data.previous_chat_input }}\n- {{ $json.data.top_messages }}\nHình ảnh phải bám sát yêu cầu hiện tại.",
+        "options": {
+          "sampleCount": 1,
+          "binaryPropertyOutput": "data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        -368
+      ],
+      "id": "2f13f70d-2155-4523-b69c-7265e8ac31a8",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XZrHEP3Xms9xPYKa",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "edit",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "={{ $('Prepare data req to model edit image').item.json.current_chat_input.message }}",
+        "images": {
+          "values": [
+            {
+              "binaryPropertyName": "={{ $json.data_field }}"
+            }
+          ]
+        },
+        "options": {
+          "binaryPropertyOutput": "data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        32
+      ],
+      "id": "f7af228b-32a6-4fa7-8579-4586eebcfed7",
+      "name": "Edit an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XZrHEP3Xms9xPYKa",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Handle edit image\nTODO:\n- Change model use curl, request with multi image and chat text to model\n",
+        "height": 480,
+        "width": 1680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "40bd199a-9894-43a4-900b-54a8cd24c387",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "name": "={{ `${$('create_data').item.json.sessionId}_${$('create_data').item.json.timestamp}_res.png` }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1KRMDF0EReb7UDwXN6o0wDP50rh7aHfmV",
+          "mode": "list",
+          "cachedResultName": "agent_image",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1KRMDF0EReb7UDwXN6o0wDP50rh7aHfmV"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1952,
+        16
+      ],
+      "id": "2f54b893-a1d7-41ab-8f85-332b3c30ca1f",
+      "name": "upload_image_res_edit",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "lIFz1vB4yOBYKJne",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "file_res": "={{ $json.name }}",
+            "has_file_res": "true",
+            "file_res_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "file_res"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_input",
+              "displayName": "chat_input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "has_file",
+              "displayName": "has_file",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_res",
+              "displayName": "file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_res_id",
+              "displayName": "file_res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_file_res",
+              "displayName": "has_file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text_res",
+              "displayName": "text_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2160,
+        16
+      ],
+      "id": "e9020487-6cec-4d24-be3c-7a6b6b0825b4",
+      "name": "add_data_res_image_edit",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const files = $(\"upload_image_res_edit\").all() || [];\n\nconst markdown = files\n  .filter(file => file.json.mimeType?.startsWith(\"image/\"))\n  .map(file => {\n    const thumb = file.json.thumbnailLink;\n    const download = file.json.webViewLink;\n    const name = file.json.name;\n\n    return `\n### Ảnh sau khi tạo\n\n[![${name}](${thumb})](${download})\n\n[⬇ Download ảnh](${download})\n`;\n  })\n  .join(\"\\n\");\n\nreturn [\n  {\n    json: {\n      text: markdown.trim()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2368,
+        16
+      ],
+      "id": "c8efb6ea-0736-4a21-a7eb-a5bf8deb82f9",
+      "name": "return_make_down_res_edit"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55ca0000-797e-41e1-8b04-c2cc022809b3",
+              "leftValue": "={{ $json.bytes }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1312,
+        -368
+      ],
+      "id": "288fe211-5d10-4812-8dc5-38b3a5816829",
+      "name": "handle res gen dont have data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "66f0c744-9a4b-460a-82d9-43755e06defa",
+              "leftValue": "={{ $json.bytes }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1728,
+        32
+      ],
+      "id": "532f99a6-4144-4e8d-8faf-c7c82cc47fd6",
+      "name": "handle res edit dont have data"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "file_res": "={{ $json.name }}",
+            "has_file_res": "true",
+            "file_res_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "file_res"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_input",
+              "displayName": "chat_input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "has_file",
+              "displayName": "has_file",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_id",
+              "displayName": "file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file_res",
+              "displayName": "file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_res_id",
+              "displayName": "file_res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_file_res",
+              "displayName": "has_file_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text_res",
+              "displayName": "text_res",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1744,
+        -384
+      ],
+      "id": "35c733ac-409f-4dcf-905d-b643a4f7fe12",
+      "name": "set_data_res_image_gen",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      text: \"Yêu cầu hỏi các nội dung liên quan đến: phân tích ảnh, tạo ảnh và sửa ảnh\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        432
+      ],
+      "id": "9795f6bb-4890-46ce-9b1c-99a54c89ce26",
+      "name": "return_make_down_res_chat"
+    },
+    {
+      "parameters": {
+        "content": "Handle chat\n",
+        "height": 256,
+        "width": 1680,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "f8c8eb53-c02a-4c29-ab25-1fecb67589ca",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $(\"Prepare data req to model edit image\").first().json;\n\n// 1. Ưu tiên current_chat_input\nif (data?.current_chat_input?.have_img && data.current_chat_input.data_field) {\n  return {\n    json: {\n      data_field: data.current_chat_input.data_field,\n    },\n    binary: $(\"Prepare data req to model edit image\").first().binary\n  };\n}\n\n// 2. Nếu không có thì lấy previous_chat_input đầu tiên hợp lệ\nif (Array.isArray(data?.previous_chat_input)) {\n  const found = data.previous_chat_input.find(\n    item => item?.have_img && item.data_field\n  );\n\n  if (found) {\n    return {\n      json: {\n        data_field: found.data_field,\n      },\n      binary: $(\"Prepare data req to model edit image\").first().binary\n    };\n  }\n}\n\n// 3. Không có thì trả null\nreturn {\n  json: {\n    data_field: null,\n  },\n  binary: $(\"Prepare data req to model edit image\").first().binary\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        32
+      ],
+      "id": "9d4a3dc3-3394-4435-b77d-cbce79bd7c17",
+      "name": "get_field_file"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "601cb4ba-d464-4e9c-be7a-01f6855c6ba4",
+              "leftValue": "={{ $json.data_field }}",
+              "rightValue": "null",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1296,
+        32
+      ],
+      "id": "0277f9c8-bef4-4e26-a602-50d26248c58d",
+      "name": "check have image to edit"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      text: \"Không tìm thấy dữ liệu, vui lòng thêm ảnh mới để tiếp tục\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        240
+      ],
+      "id": "8e6fa4df-324d-4c13-b938-9f0f0830f556",
+      "name": "return_make_down_res_error_dont_have_data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Prepare file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "logs2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare file": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_data": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "logs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "get chat input req",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "get session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "classify req": {
+      "main": [
+        [
+          {
+            "node": "check output is ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get chat input req": {
+      "main": [
+        [
+          {
+            "node": "classify req",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check output is ok": {
+      "main": [
+        [
+          {
+            "node": "mapping field type req",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get chat input req",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle data with mode": {
+      "main": [
+        [
+          {
+            "node": "Prepare data req to model analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare data req to model generator image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare data req to model edit image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare data req to model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get session": {
+      "main": [
+        [
+          {
+            "node": "merge data after match mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge data after match mode": {
+      "main": [
+        [
+          {
+            "node": "Handle data with mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mapping field type req": {
+      "main": [
+        [
+          {
+            "node": "merge data after match mode",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Prepare data req to model analyze image": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "logs1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "logs2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "return_make_down_res_analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "temp res model return analyze": {
+      "main": [
+        [
+          {
+            "node": "return_make_down_res_analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "create_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare data req to model generator image": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload_image_res_gen": {
+      "main": [
+        [
+          {
+            "node": "set_data_res_image_gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "return_make_down_res_analyze": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "handle res gen dont have data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "return_make_down_res_gen": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare data req to model edit image": {
+      "main": [
+        [
+          {
+            "node": "get_field_file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload_image_res_edit": {
+      "main": [
+        [
+          {
+            "node": "add_data_res_image_edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_data_res_image_edit": {
+      "main": [
+        [
+          {
+            "node": "return_make_down_res_edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "return_make_down_res_edit": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit an image": {
+      "main": [
+        [
+          {
+            "node": "handle res edit dont have data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "handle res gen dont have data": {
+      "main": [
+        [
+          {
+            "node": "upload_image_res_gen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "handle res edit dont have data": {
+      "main": [
+        [
+          {
+            "node": "upload_image_res_edit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_data_res_image_gen": {
+      "main": [
+        [
+          {
+            "node": "return_make_down_res_gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare data req to model": {
+      "main": [
+        [
+          {
+            "node": "return_make_down_res_chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "return_make_down_res_chat": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_field_file": {
+      "main": [
+        [
+          {
+            "node": "check have image to edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check have image to edit": {
+      "main": [
+        [
+          {
+            "node": "Edit an image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "return_make_down_res_error_dont_have_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "return_make_down_res_error_dont_have_data": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bfa68f21-6b67-4779-b43e-03f3fc3a6ef0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b10d98fa5ef1dabea01987353b5bc618b502ec387f5e72682ac4835c19f82ce7"
+  },
+  "id": "wKP1GHsHPbbpXqXW",
+  "tags": []
+}

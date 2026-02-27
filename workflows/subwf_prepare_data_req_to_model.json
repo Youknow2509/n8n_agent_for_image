@@ -1,0 +1,751 @@
+{
+  "name": "subwf_prepare_data_req_to_model",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "session_id"
+            },
+            {
+              "name": "timestamp",
+              "type": "number"
+            },
+            {
+              "name": "type"
+            }
+          ]
+        }
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        240,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "content": "\nAnalyze -> Image cur or after in session",
+        "height": 240,
+        "width": 1488
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        -448
+      ],
+      "typeVersion": 1,
+      "id": "04d824dc-2240-4430-9a69-e07dc54ee6bd",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image_analyze",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "58d5fbdd-8d72-477a-9f34-6d80b5be5695"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "analyze"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "63c2470c-7586-4900-a994-9cd677df113a",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image_gen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "generator"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "913f8373-2ca0-44d0-8617-5f40cc1fc7b5",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image_edit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "edit"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9b6f6bc2-1bf7-40a7-b9bc-65b62ec3c1eb",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        320
+      ],
+      "id": "af55d374-9ab2-4e96-94b5-4062def9d2bc",
+      "name": "Handle create data with mode"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "session_id",
+              "lookupValue": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        -384
+      ],
+      "id": "30e859e8-212d-43ab-b0e0-343fa0ab6e4e",
+      "name": "get logs for analyze",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $(\"Get info top log data have image in session\").all();\n\nlet latestImage = null;\nlet latestImageTs = -Infinity;\n\nconst message_get = 5;\nconst topMessages = [];\n\nfor (const item of data) {\n  const json = item.json;\n\n  const ts = Number(json.timestamp);\n  if (isNaN(ts)) continue;\n\n  const chatInput = (json.chat_input || \"\").trim();\n\n  // =====================================\n  // ƯU TIÊN has_file_res trước\n  // =====================================\n  let selectedImage = null;\n  let selectedImageType = null;\n\n  if (\n    json.has_file_res === true &&\n    typeof json.file_res === \"string\" &&\n    json.file_res.trim() !== \"\"\n  ) {\n    selectedImage = json.file_res.trim();\n    selectedImageType = \"result_image\";\n  } \n  else if (\n    json.has_file === true &&\n    typeof json.file_name === \"string\" &&\n    json.file_name.trim() !== \"\"\n  ) {\n    selectedImage = json.file_name.trim();\n    selectedImageType = \"input_image\";\n  }\n\n  const isImage = selectedImage !== null;\n  const isMessage = chatInput !== \"\";\n\n  // ===== 1. Lấy image mới nhất =====\n  if (isImage && ts > latestImageTs) {\n    latestImageTs = ts;\n\n    // Mapping file_id theo loại ảnh\n    const mappedFileId =\n      selectedImageType === \"result_image\"\n        ? (json.file_res_id || \"\").trim()\n        : (json.file_id || \"\").trim();\n\n    latestImage = {\n      selected_image: selectedImage,\n      selected_image_type: selectedImageType,\n      chat_input: chatInput,\n      timestamp: ts,\n      file_id: mappedFileId\n    };\n  }\n\n  // ===== 2. Lấy top 5 message gần nhất =====\n  if (isMessage) {\n    if (topMessages.length < message_get) {\n      topMessages.push({ item, ts });\n    } else {\n      let minIndex = 0;\n\n      for (let i = 1; i < topMessages.length; i++) {\n        if (topMessages[i].ts < topMessages[minIndex].ts) {\n          minIndex = i;\n        }\n      }\n\n      if (ts > topMessages[minIndex].ts) {\n        topMessages[minIndex] = { item, ts };\n      }\n    }\n  }\n}\n\n// Sort lại theo timestamp giảm dần\ntopMessages.sort((a, b) => b.ts - a.ts);\n\n// ===== 3. Tách current & previous =====\nconst currentChat = topMessages[0]?.item.json.chat_input?.trim() || \"\";\nconst previousChat = topMessages[1]?.item.json.chat_input?.trim() || \"\";\n\n// ===== 4. Trả kết quả =====\nreturn {\n  image: latestImage,\n\n  current_chat_input: currentChat,\n  previous_chat_input: previousChat,\n\n  top_messages: topMessages.map(x =>\n    (x.item.json.chat_input || \"\").trim()\n  )\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -384
+      ],
+      "id": "75ebaafe-2ed7-4c1d-bd12-75902ee4e68d",
+      "name": "get data req raw"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.image.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1456,
+        -384
+      ],
+      "id": "2ce1aff2-c186-4dc2-99a4-92f574b1a280",
+      "name": "dowload_image_analyze",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "lIFz1vB4yOBYKJne",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let binary_data = $(\"dowload_image_analyze\").first();\nlet json_data_base = $(\"get data req raw\").first();\n\nreturn {\n  \"binary\": {\n    \"data\": binary_data.binary.data\n  },\n  \"json\":{\n    \"data\": {\n      ...binary_data.json,\n      ...json_data_base.json,\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        -384
+      ],
+      "id": "38ab8f92-0744-4412-a92e-90c094f8fb73",
+      "name": "output_data_analyze"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "session_id",
+              "lookupValue": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        -80
+      ],
+      "id": "955da7c5-97cf-4441-8f32-62776e68c897",
+      "name": "get logs for gen",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $(\"get logs for gen\").all();\nconst K = 3;\n\nconst sorted = items\n  .map(i => i.json)\n  .sort((a, b) => b.timestamp - a.timestamp)\n  .slice(0, K);\n\nreturn sorted.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -80
+      ],
+      "id": "f5eb1cec-06a4-4cf8-9f18-f0aa83c83d90",
+      "name": "Get info top log data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $(\"Get info top log data\").all() || [];\nconst K = 5;\n\n// Sort mới nhất trước\nconst sorted = [...items].sort((a, b) => b.json.timestamp - a.json.timestamp);\n\n// Lấy top K chat_input (loại bỏ rỗng + trim)\nconst topMessages = sorted\n  .map(item => (item.json.chat_input || \"\").trim())\n  .filter(text => text !== \"\")\n  .slice(0, K);\n\n// Xác định current và previous\nconst currentChatInput = topMessages[0] || \"\";\nconst previousChatInput = topMessages[1] || \"\";\n\nreturn [\n  {\n    json: {\n      data: {\n        current_chat_input: currentChatInput,\n        previous_chat_input: previousChatInput,\n        top_messages: topMessages\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -80
+      ],
+      "id": "f05c88af-712b-4555-b2d5-a7b926630691",
+      "name": "output_data_gen"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $(\"get logs for analyze\").all();\nconst top_message_get = 5;\nlet targetTimestamp;\nlet targetSession;\n\ntry {\n  const node = $('Handle create data with mode').first();\n  targetTimestamp = Number(node?.json?.timestamp);\n  targetSession = node?.json?.session_id;\n} catch (e) {\n  targetTimestamp = NaN;\n  targetSession = null;\n}\n\nif (isNaN(targetTimestamp)) {\n  targetTimestamp = Date.now();\n}\n\nif (!targetSession) {\n  return [];\n}\n\nlet closestImage = null;\nlet minImageDiff = Infinity;\n\nconst topMessages = [];\n\nfor (const item of data) {\n  const json = item.json;\n\n  if (json.session_id !== targetSession) continue;\n\n  const ts = Number(json.timestamp);\n  if (isNaN(ts)) continue;\n\n  const diff = Math.abs(ts - targetTimestamp);\n\n  const isImage =\n    json.has_file === true ||\n    (typeof json.file_res === \"string\" && json.file_res.trim() !== \"\");\n\n  const isMessage =\n    typeof json.chat_input === \"string\" &&\n    json.chat_input.trim() !== \"\";\n\n  // ===== ẢNH GẦN NHẤT =====\n  if (isImage) {\n    if (diff < minImageDiff) {\n      minImageDiff = diff;\n      closestImage = item;\n    }\n  }\n\n  // ===== TOP top_message_get MESSAGE =====\n  if (isMessage) {\n    if (topMessages.length < top_message_get) {\n      topMessages.push({ item, diff });\n    } else {\n      let maxIndex = 0;\n      for (let i = 1; i < 5; i++) {\n        if (topMessages[i].diff > topMessages[maxIndex].diff) {\n          maxIndex = i;\n        }\n      }\n\n      if (diff < topMessages[maxIndex].diff) {\n        topMessages[maxIndex] = { item, diff };\n      }\n    }\n  }\n}\n\ntopMessages.sort((a, b) => a.diff - b.diff);\n\nconst result = [];\n\nif (closestImage) result.push(closestImage);\nresult.push(...topMessages.map(x => x.item));\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -384
+      ],
+      "id": "f90b43f7-162c-4c43-9b4c-66e6f1fbd250",
+      "name": "Get info top log data have image in session"
+    },
+    {
+      "parameters": {
+        "content": "\nGen -> Get top chat history\nTODO: \n- handle return bytes data image ",
+        "height": 240,
+        "width": 1488,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "06cf70b2-f0d1-41d1-bb3c-14d55256c1e8",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "\nEdit -> get top k message and image history",
+        "height": 432,
+        "width": 1492,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "a7245fc5-ee40-4450-88ca-64983f058bab",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xCfm1_J5s90wMh4bSg-Ay6j-01N18nWQ3GT-F2EDnow/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "session_id",
+              "lookupValue": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        240
+      ],
+      "id": "48315c01-8e72-459e-9d12-9a58689e71b6",
+      "name": "get logs for edit",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "96ARdzCyGkRtfi4V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $(\"get logs for edit\").all();\nconst K = 5;\n\nconst sorted = items\n  .map(i => i.json)\n  .sort((a, b) => b.timestamp - a.timestamp)\n  .slice(0, K);\n\nreturn sorted.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        240
+      ],
+      "id": "4e7181b2-cc18-4524-9f0c-7c224835a936",
+      "name": "Get info top log data2"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "={{ `${$('check log have file').item.json.session_id}_${$('check log have file').item.json.timestamp}` }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1920,
+        320
+      ],
+      "id": "b720d9f5-df13-454a-a29b-ebcd29a723ca",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "lIFz1vB4yOBYKJne",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "df9f4357-3b60-4717-9bb3-58dc471773b2",
+              "leftValue": "={{ $json.has_file }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "fde7c8e5-f625-4f6d-9162-f9b62a96c277",
+              "leftValue": "={{ $json.has_file_res }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1408,
+        336
+      ],
+      "id": "cc9b1dd4-708e-49aa-82d1-8b0c53799f61",
+      "name": "check log have file"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1296,
+        176
+      ],
+      "id": "711e25ca-fc42-4221-b594-51180c9125b3",
+      "name": "get_list_data_files"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $(\"Get info top log data2\").all();\n\n// Sắp xếp theo timestamp tăng dần\nallItems.sort((a, b) => a.json.timestamp - b.json.timestamp);\n\n/**\n * Hàm chuẩn hóa record\n */\nfunction mapRecord(record) {\n  return {\n    message: record.chat_input || \"\",\n    have_img: Boolean(record.has_file || record.has_file_res || false),\n    data_field: `${record.session_id}_${record.timestamp}`\n  };\n}\n\n/**\n * get current chat input \n * return: {\n *  \"message\": string,\n *  \"have_img\": bool,\n *  \"data_field\": string,\n * }\n */ \n// Record cuối là current\nconst lastIndex = allItems.length - 1;\n\nlet current_chat_input = mapRecord(allItems[lastIndex].json);\n\n/**\n * get list chat previous\n * return: [{\n *  \"message\": string,\n *  \"have_img\": bool,\n *  \"data_field\": string,\n * }, ...]\n */\nlet previous_chat_input = allItems\n  .slice(0, lastIndex)\n  .map(item => mapRecord(item.json));\n\n// Get binary files\nconst fileItems = $(\"get_list_data_files\").all();\n\nlet binary_files = {};\n\nfor (const item of fileItems) {\n  if (item.binary) {\n    binary_files = {\n      ...binary_files,\n      ...item.binary\n    };\n  }\n}\nreturn {\n  binary: binary_files,\n  json: {\n    current_chat_input,\n    previous_chat_input\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        160
+      ],
+      "id": "aa942d2a-6646-43c4-bdec-e998106484a9",
+      "name": "output_data_edit"
+    },
+    {
+      "parameters": {
+        "jsCode": "let datas = $input.all();\nif (datas.length < 0) {\n  return {};\n}\nreturn {\n  json: datas[0].json,\n  binary: datas[0].binary\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        320
+      ],
+      "id": "83708054-a94b-4351-b0ef-ea2a87452c06",
+      "name": "return_file"
+    },
+    {
+      "parameters": {
+        "jsCode": "if ($input.first().json.has_file) {\n  return {\n    file_id: $input.first().json.file_id\n  };\n} else {\n  return {\n    file_id: $input.first().json.file_res_id\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        320
+      ],
+      "id": "387e221a-a32a-4e06-a62f-c4f08672eaab",
+      "name": "get_image_id_edited"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Handle create data with mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle create data with mode": {
+      "main": [
+        [
+          {
+            "node": "get logs for analyze",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get logs for gen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get logs for edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get logs for analyze": {
+      "main": [
+        [
+          {
+            "node": "Get info top log data have image in session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get data req raw": {
+      "main": [
+        [
+          {
+            "node": "dowload_image_analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dowload_image_analyze": {
+      "main": [
+        [
+          {
+            "node": "output_data_analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get logs for gen": {
+      "main": [
+        [
+          {
+            "node": "Get info top log data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get info top log data": {
+      "main": [
+        [
+          {
+            "node": "output_data_gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get info top log data have image in session": {
+      "main": [
+        [
+          {
+            "node": "get data req raw",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get logs for edit": {
+      "main": [
+        [
+          {
+            "node": "Get info top log data2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get info top log data2": {
+      "main": [
+        [
+          {
+            "node": "get_list_data_files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "return_file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check log have file": {
+      "main": [
+        [
+          {
+            "node": "get_image_id_edited",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get_list_data_files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_list_data_files": {
+      "main": [
+        [
+          {
+            "node": "output_data_edit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "check log have file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "return_file": {
+      "main": [
+        [
+          {
+            "node": "get_list_data_files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_image_id_edited": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5ece57ea-9702-4205-b617-479ec3209355",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b10d98fa5ef1dabea01987353b5bc618b502ec387f5e72682ac4835c19f82ce7"
+  },
+  "id": "iIL0PhQsa6bIHZqT",
+  "tags": []
+}
