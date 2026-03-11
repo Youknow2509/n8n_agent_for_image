@@ -45,7 +45,7 @@ docker compose up -d
 - From `google drive`, create a folder named `agent_image` and create sheet file named `logs` in that folder.
 - In the `logs` sheet, create the following columns:
 ```
-| timestamp | session_id | chat_input | has_file | file_name | file_id | file_res | file_res_id | text_res |
+| timestamp | session_id | chat_input | has_file | file_name | file_id | file_res | file_res_id | has_file_res | text_res |
 ```
 
 ## 8. Create credential for `google drive` and `google sheets` in `google cloud` and access your account to n8n to use those credentials.
